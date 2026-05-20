@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>YMS Monitor — SMG15</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #0b0d12;
+      --surface:  #12141a;
+      --card:     #181b23;
+      --border:   #252830;
+      --border2:  #323641;
+      --text:     #e2e4ec;
+      --muted:    #5a5f72;
+      --faint:    #2a2e3a;
+
+      --ok:       #22c55e;
+      --ok-bg:    rgba(34,197,94,.1);
+      --warn:     #f59e0b;
+      --warn-bg:  rgba(245,158,11,.1);
+      --danger:   #ef4444;
+      --danger-bg:rgba(239,68,68,.1);
+      --info:     #38bdf8;
+      --info-bg:  rgba(56,189,248,.1);
+
+      --font-mono: 'JetBrains Mono', monospace;
+      --font-ui:   'Syne', sans-serif;
+      --radius:    6px;
+      --radius-lg: 10px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-ui);
+      font-size: 14px;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── TOPBAR ── */
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(11,13,18,.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      height: 54px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .topbar-left { display: flex; align-items: center; gap: 14px; }
+    .logo {
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: .08em;
+      color: var(--text);
+    }
+    .logo span { color: var(--info); }
+    .site-tag {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--info);
+      background: var(--info-bg);
+      border: 1px solid rgba(56,189,248,.2);
+      padding: 3px 8px;
+      border-radius: 3px;
+      letter-spacing: .06em;
+    }
+    .live-dot {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--ok);
+      letter-spacing: .05em;
+    }
+    .live-dot::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--ok);
+      animation: blink 2s ease-in-out infinite;
+    }
+    @keyframes blink {
+      0%,100% { opacity:1; box-shadow: 0 0 0 0 rgba(34,197,94,.5); }
+      50% { opacity:.7; box-shadow: 0 0 0 4px rgba(34,197,94,0); }
+    }
+    .topbar-right { display: flex; align-items: center; gap: 16px; }
+    .clock {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .refresh-btn {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      padding: 5px 12px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border2);
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+      transition: all .15s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .refresh-btn:hover { border-color: var(--info); color: var(--info); }
+    .refresh-btn svg { width: 13px; height: 13px; }
+
+    /* ── MAIN ── */
+    .main { padding: 20px 24px 40px; max-width: 1440px; margin: 0 auto; }
+
+    /* ── CONFIG BANNER ── */
+    .config-banner {
+      background: var(--card);
+      border: 1px solid var(--warn);
+      border-radius: var(--radius-lg);
+      padding: 16px 20px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+    }
+    .config-banner.hidden { display: none; }
+    .config-icon { font-size: 18px; margin-top: 1px; }
+    .config-body { flex: 1; }
+    .config-body h3 { font-size: 13px; font-weight: 700; color: var(--warn); margin-bottom: 6px; letter-spacing: .04em; }
+    .config-body p { font-size: 12px; color: var(--muted); line-height: 1.6; }
+    .config-body code {
+      font-family: var(--font-mono);
+      background: var(--faint);
+      padding: 1px 5px;
+      border-radius: 3px;
+      font-size: 11px;
+      color: var(--info);
+    }
+    .config-form { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+    .config-input {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      padding: 7px 12px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border2);
+      background: var(--bg);
+      color: var(--text);
+      outline: none;
+      flex: 1;
+      min-width: 260px;
+    }
+    .config-input:focus { border-color: var(--info); }
+    .config-input::placeholder { color: var(--muted); }
+    .config-save {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      padding: 7px 16px;
+      border-radius: var(--radius);
+      border: 1px solid var(--info);
+      background: var(--info-bg);
+      color: var(--info);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all .15s;
+    }
+    .config-save:hover { background: rgba(56,189,248,.2); }
+
+    /* ── STATS ── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 14px 16px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color .2s;
+    }
+    .stat-card:hover { border-color: var(--border2); }
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 3px; height: 100%;
+    }
+    .stat-card.c-info::before   { background: var(--info); }
+    .stat-card.c-ok::before     { background: var(--ok); }
+    .stat-card.c-warn::before   { background: var(--warn); }
+    .stat-card.c-danger::before { background: var(--danger); }
+    .stat-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    .stat-value {
+      font-family: var(--font-mono);
+      font-size: 28px;
+      font-weight: 600;
+      line-height: 1;
+    }
+    .stat-card.c-info .stat-value   { color: var(--info); }
+    .stat-card.c-ok .stat-value     { color: var(--ok); }
+    .stat-card.c-warn .stat-value   { color: var(--warn); }
+    .stat-card.c-danger .stat-value { color: var(--danger); }
+    .stat-sub { font-size: 11px; color: var(--muted); margin-top: 5px; }
+
+    /* ── FILTERS ── */
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+    .filter-group { display: flex; gap: 4px; flex-wrap: wrap; }
+    .filter-btn {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      padding: 5px 11px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--muted);
+      cursor: pointer;
+      letter-spacing: .05em;
+      transition: all .15s;
+      white-space: nowrap;
+    }
+    .filter-btn:hover { border-color: var(--border2); color: var(--text); }
+    .filter-btn.active {
+      border-color: var(--info);
+      color: var(--info);
+      background: var(--info-bg);
+    }
+    .filter-btn.active-warn {
+      border-color: var(--warn);
+      color: var(--warn);
+      background: var(--warn-bg);
+    }
+    .filter-btn.active-danger {
+      border-color: var(--danger);
+      color: var(--danger);
+      background: var(--danger-bg);
+    }
+    .toolbar-right { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+    .search-wrap { position: relative; }
+    .search-input {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      padding: 6px 10px 6px 30px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      outline: none;
+      width: 180px;
+      transition: border-color .15s, width .2s;
+    }
+    .search-input:focus { border-color: var(--info); width: 220px; }
+    .search-input::placeholder { color: var(--muted); }
+    .search-icon {
+      position: absolute;
+      left: 9px; top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      pointer-events: none;
+    }
+    .sort-select {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      padding: 6px 10px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--muted);
+      cursor: pointer;
+      outline: none;
+    }
+    .sort-select:focus { border-color: var(--info); }
+
+    /* ── TABLE ── */
+    .table-wrap {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+    .table-head {
+      display: grid;
+      grid-template-columns: 110px 1fr 90px 80px 100px 80px 80px;
+      gap: 8px;
+      padding: 10px 16px;
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+    .rows-container { max-height: 62vh; overflow-y: auto; }
+    .rows-container::-webkit-scrollbar { width: 4px; }
+    .rows-container::-webkit-scrollbar-track { background: transparent; }
+    .rows-container::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+    .row {
+      display: grid;
+      grid-template-columns: 110px 1fr 90px 80px 100px 80px 80px;
+      gap: 8px;
+      align-items: center;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      border-left: 3px solid transparent;
+      cursor: default;
+      transition: background .12s;
+    }
+    .row:last-child { border-bottom: none; }
+    .row:hover { background: rgba(255,255,255,.025); }
+    .row.r-ok     { border-left-color: var(--ok); }
+    .row.r-warn   { border-left-color: var(--warn); }
+    .row.r-danger { border-left-color: var(--danger); }
+    .row.r-info   { border-left-color: var(--info); }
+
+    .plate {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text);
+      white-space: nowrap;
+    }
+    .plate .sdd-badge {
+      font-size: 8px;
+      background: rgba(56,189,248,.12);
+      color: var(--info);
+      border-radius: 2px;
+      padding: 1px 3px;
+      margin-right: 4px;
+      vertical-align: middle;
+    }
+    .carrier {
+      font-size: 11px;
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .carrier strong {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 1px;
+    }
+    .vtype { font-size: 10px; color: var(--muted); }
+    .t-time {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+    .elapsed {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .elapsed.e-ok     { color: var(--ok); }
+    .elapsed.e-warn   { color: var(--warn); }
+    .elapsed.e-danger { color: var(--danger); }
+    .elapsed.e-info   { color: var(--info); }
+    .elapsed.e-done   { color: var(--muted); }
+
+    .pill {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      padding: 3px 8px;
+      border-radius: 3px;
+      font-weight: 600;
+      letter-spacing: .06em;
+      text-align: center;
+      white-space: nowrap;
+    }
+    .pill-ok     { background: var(--ok-bg);     color: var(--ok); }
+    .pill-warn   { background: var(--warn-bg);   color: var(--warn); }
+    .pill-danger { background: var(--danger-bg); color: var(--danger); }
+    .pill-info   { background: var(--info-bg);   color: var(--info); }
+
+    .driver-id {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--muted);
+    }
+
+    /* ── EMPTY / LOADING ── */
+    .state-msg {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--muted);
+    }
+    .state-msg .icon { font-size: 32px; margin-bottom: 12px; }
+    .state-msg p { font-size: 13px; line-height: 1.6; }
+    .spinner {
+      width: 20px; height: 20px;
+      border: 2px solid var(--border);
+      border-top-color: var(--info);
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+      margin: 0 auto 12px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── FOOTER ── */
+    .footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-top: 1px solid var(--border);
+      font-size: 11px;
+      color: var(--muted);
+      background: var(--surface);
+    }
+    .footer-left { display: flex; align-items: center; gap: 12px; }
+    .last-update { font-family: var(--font-mono); font-size: 10px; }
+
+    /* ── MODAL (detalhe) ── */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.65);
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .2s;
+    }
+    .overlay.open { opacity: 1; pointer-events: all; }
+    .modal {
+      background: var(--card);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius-lg);
+      width: 480px;
+      max-width: 92vw;
+      padding: 24px;
+      transform: translateY(8px);
+      transition: transform .2s;
+    }
+    .overlay.open .modal { transform: translateY(0); }
+    .modal-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .modal-plate {
+      font-family: var(--font-mono);
+      font-size: 22px;
+      font-weight: 700;
+    }
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 18px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      transition: color .15s;
+    }
+    .modal-close:hover { color: var(--text); }
+    .modal-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .modal-field label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: var(--muted);
+      display: block;
+      margin-bottom: 3px;
+    }
+    .modal-field value {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text);
+      display: block;
+    }
+    .modal-field.full { grid-column: 1 / -1; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 900px) {
+      .table-head,
+      .row { grid-template-columns: 100px 1fr 70px 80px 90px; }
+      .col-driver, .col-vtype { display: none; }
+    }
+    @media (max-width: 600px) {
+      .main { padding: 12px; }
+      .topbar { padding: 0 12px; }
+      .table-head,
+      .row { grid-template-columns: 90px 1fr 70px 90px; }
+      .col-checkin { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<header class="topbar">
+  <div class="topbar-left">
+    <span class="logo">YMS <span>MONITOR</span></span>
+    <span class="site-tag" id="siteTag">SMG15 · MLB</span>
+    <span class="live-dot" id="liveStatus">AO VIVO</span>
+  </div>
+  <div class="topbar-right">
+    <span class="clock" id="clockEl">--:--:--</span>
+    <button class="refresh-btn" onclick="fetchData()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+        <path d="M3 3v5h5"/>
+      </svg>
+      ATUALIZAR
+    </button>
+  </div>
+</header>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- CONFIG BANNER -->
+  <div class="config-banner" id="configBanner">
+    <div class="config-icon">⚙</div>
+    <div class="config-body">
+      <h3>CONFIGURAÇÃO NECESSÁRIA</h3>
+      <p>
+        Informe sua <code>Google Sheets API Key</code> para conectar à planilha em tempo real.<br/>
+        A chave precisa ter acesso à <b>Sheets API v4</b>. O ID da planilha já está configurado.
+        <br/><small style="color:#444b5f">A chave fica salva apenas no navegador (localStorage) — nunca enviada para terceiros.</small>
+      </p>
+      <div class="config-form">
+        <input class="config-input" id="apiKeyInput" type="password"
+          placeholder="Cole aqui: AIzaSy..." autocomplete="off" />
+        <button class="config-save" onclick="saveConfig()">SALVAR E CONECTAR</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-grid">
+    <div class="stat-card c-info">
+      <div class="stat-label">no pátio agora</div>
+      <div class="stat-value" id="st-total">—</div>
+      <div class="stat-sub">veículos ativos</div>
+    </div>
+    <div class="stat-card c-ok">
+      <div class="stat-label">finalizados hoje</div>
+      <div class="stat-value" id="st-done">—</div>
+      <div class="stat-sub">com checkout</div>
+    </div>
+    <div class="stat-card c-warn">
+      <div class="stat-label">tardios +45min</div>
+      <div class="stat-value" id="st-warn">—</div>
+      <div class="stat-sub">atenção</div>
+    </div>
+    <div class="stat-card c-danger">
+      <div class="stat-label">críticos +90min</div>
+      <div class="stat-value" id="st-crit">—</div>
+      <div class="stat-sub">ação imediata</div>
+    </div>
+    <div class="stat-card c-info" style="--info:#a78bfa;--info-bg:rgba(167,139,250,.1);">
+      <div class="stat-label">permanência média</div>
+      <div class="stat-value" id="st-avg">—</div>
+      <div class="stat-sub">dos finalizados (min)</div>
+    </div>
+  </div>
+
+  <!-- TOOLBAR -->
+  <div class="toolbar">
+    <div class="filter-group">
+      <button class="filter-btn active" data-f="all" onclick="setFilter('all',this)">TODOS</button>
+      <button class="filter-btn" data-f="open" onclick="setFilter('open',this)">SEM CHECKOUT</button>
+      <button class="filter-btn" data-f="done" onclick="setFilter('done',this)">FINALIZADOS</button>
+      <button class="filter-btn" data-f="warn" onclick="setFilter('warn',this)">TARDIOS +45min</button>
+      <button class="filter-btn" data-f="crit" onclick="setFilter('crit',this)">CRÍTICOS +90min</button>
+    </div>
+    <div class="toolbar-right">
+      <div class="search-wrap">
+        <svg class="search-icon" width="13" height="13" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+        <input class="search-input" id="searchInput" placeholder="placa, transportadora…" oninput="renderTable()" />
+      </div>
+      <select class="sort-select" id="sortSel" onchange="renderTable()">
+        <option value="elapsed_desc">tempo ↓</option>
+        <option value="elapsed_asc">tempo ↑</option>
+        <option value="checkin">check-in ↑</option>
+        <option value="plate">placa A-Z</option>
+        <option value="carrier">transportadora</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- TABLE -->
+  <div class="table-wrap">
+    <div class="table-head">
+      <span>Placa</span>
+      <span>Transportadora</span>
+      <span class="col-checkin">Check-in</span>
+      <span>Permanência</span>
+      <span>Status</span>
+      <span class="col-vtype">Tipo veículo</span>
+      <span class="col-driver">Motorista ID</span>
+    </div>
+    <div class="rows-container" id="rowsEl">
+      <div class="state-msg">
+        <div class="icon">🔒</div>
+        <p>Configure a API Key acima para carregar os dados ao vivo.</p>
+      </div>
+    </div>
+    <div class="footer">
+      <div class="footer-left">
+        <span id="countLabel">— veículos exibidos</span>
+        <span class="last-update" id="lastUpdate"></span>
+      </div>
+      <span>Atualização a cada <strong>30s</strong></span>
+    </div>
+  </div>
+
+</main>
+
+<!-- MODAL DETALHE -->
+<div class="overlay" id="overlay" onclick="closeModal(event)">
+  <div class="modal" id="modal">
+    <div class="modal-top">
+      <div>
+        <div class="modal-plate" id="mdPlate">—</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:3px" id="mdVtype">—</div>
+      </div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-grid" id="mdGrid"></div>
+  </div>
+</div>
+
+<script>
+// ── CONFIG ──────────────────────────────────────────────────────────────────
+const SHEET_ID   = '1h1bkbhTNHHb4UWWJzzhWUbpX4b2cL3tAyernR7M5XS4';
+const SHEET_NAME = 'YMS ONLINE';
+const RANGE      = encodeURIComponent(`'${SHEET_NAME}'!A:W`);
+
+let apiKey       = localStorage.getItem('yms_api_key') || '';
+let rawData      = [];
+let currentFilter = 'all';
+let refreshTimer = null;
+
+// ── BOOT ────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  if (apiKey) {
+    document.getElementById('configBanner').classList.add('hidden');
+    fetchData();
+  } else {
+    document.getElementById('apiKeyInput').value = '';
+  }
+  startClock();
+  setInterval(() => renderTable(), 10000); // rerender elapsed every 10s
+});
+
+// ── CONFIG ──────────────────────────────────────────────────────────────────
+function saveConfig() {
+  const val = document.getElementById('apiKeyInput').value.trim();
+  if (!val) { alert('Cole a API Key antes de salvar.'); return; }
+  apiKey = val;
+  localStorage.setItem('yms_api_key', apiKey);
+  document.getElementById('configBanner').classList.add('hidden');
+  fetchData();
+}
+
+// ── FETCH ────────────────────────────────────────────────────────────────────
+async function fetchData() {
+  if (!apiKey) return;
+  setLiveStatus('loading');
+
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${RANGE}?key=${apiKey}`;
+
+  try {
+    const res = await fetch(url);
+    if (!res.ok) {
+      const err = await res.json();
+      handleApiError(err);
+      return;
+    }
+    const json = await res.json();
+    rawData = parseSheet(json.values || []);
+    renderStats();
+    renderTable();
+    updateSiteTag();
+    setLiveStatus('live');
+    document.getElementById('lastUpdate').textContent =
+      'Atualizado: ' + new Date().toLocaleTimeString('pt-BR');
+    scheduleRefresh();
+  } catch (e) {
+    setLiveStatus('error');
+    console.error('Fetch error:', e);
+  }
+}
+
+function scheduleRefresh() {
+  if (refreshTimer) clearTimeout(refreshTimer);
+  refreshTimer = setTimeout(fetchData, 30000);
+}
+
+function handleApiError(err) {
+  setLiveStatus('error');
+  const msg = err?.error?.message || 'Erro desconhecido';
+  const rows = document.getElementById('rowsEl');
+  rows.innerHTML = `
+    <div class="state-msg">
+      <div class="icon">⚠</div>
+      <p>Erro da API: <strong>${msg}</strong><br/>
+      Verifique se a API Key está correta e tem acesso à Sheets API v4.</p>
+    </div>`;
+}
+
+// ── PARSE ────────────────────────────────────────────────────────────────────
+// Colunas da planilha (índice 0-based):
+// 0  ID
+// 1  Gate_Checkin_Date
+// 2  Gate_Checkout_Date
+// 3  GATE_Reference_Date
+// 4  Gate_Checkin_UserId
+// 5  PURPOSE_MILE
+// 6  Gate_Checkin_DeviceType
+// 7  GATE_CHECKIN_OPERATION
+// 8  GATE_CHECKIN_OPERATION_AUTHORIZATIONS
+// 9  GATE_CHECKIN_ESTIMATED_TIME
+// 10 Gate_Checkout_UserId
+// 11 Gate_Checkout_DeviceType
+// 12 GATE_CHECKOUT_ESTIMATED_TIME
+// 13 Gate_Facility_StayTimeMinutes
+// 14 Request_Carrier_DisplayName
+// 15 Request_Carrier_Id
+// 16 Request_Driver_DriverId
+// 17 Request_Facility_Id
+// 18 Request_Facility_SiteId
+// 19 Request_Vehicle_LicensePlate
+// 20 Request_Vehicle_Type_Description
+// 21 Request_Vehicle_id
+
+function parseBRDate(str) {
+  if (!str) return null;
+  // format: "20/05/2026 08:29:18"
+  const [datePart, timePart] = str.split(' ');
+  if (!datePart) return null;
+  const [d, m, y] = datePart.split('/');
+  return new Date(`${y}-${m}-${d}T${timePart || '00:00:00'}`);
+}
+
+function parseSheet(rows) {
+  if (rows.length < 2) return [];
+  const header = rows[0];
+  const seen = new Set();
+  return rows.slice(1)
+    .map(r => {
+      const id    = r[0] || '';
+      // dedup — planilha pode ter linhas duplicadas
+      if (seen.has(id)) return null;
+      seen.add(id);
+
+      const rawPlate = (r[19] || '').trim();
+      const isSDD    = rawPlate.startsWith('SDD-');
+      const plate    = isSDD ? rawPlate.slice(4) : rawPlate;
+
+      const cin  = parseBRDate(r[1]);
+      const cout = parseBRDate(r[2]);
+      const stay = parseInt(r[13], 10) || 0;
+
+      return {
+        id,
+        plate,
+        isSDD,
+        carrier:   (r[14] || '').trim(),
+        carrierId: r[15] || '',
+        driverId:  r[16] || '',
+        cin,
+        cout,
+        cinStr:    r[1]  ? r[1].split(' ')[1]  : '',
+        coutStr:   r[2]  ? r[2].split(' ')[1]  : '',
+        estOut:    r[12] || '',
+        stay,
+        vtype:     (r[20] || '').trim(),
+        facility:  r[17] || '',
+        site:      r[18] || '',
+        operation: r[7]  || '',
+        purpose:   r[5]  || '',
+        checkinUser:  r[4]  || '',
+        checkoutUser: r[10] || '',
+      };
+    })
+    .filter(Boolean);
+}
+
+// ── ELAPSED ──────────────────────────────────────────────────────────────────
+function getElapsed(item) {
+  if (item.cout) return item.stay;
+  if (!item.cin) return 0;
+  const now  = new Date();
+  const diff = Math.round((now - item.cin) / 60000);
+  return Math.max(0, diff);
+}
+
+function getStatus(item) {
+  const el = getElapsed(item);
+  if (item.cout)  return { label:'FINALIZADO', cls:'pill-ok',     row:'r-ok',     ecls:'e-done' };
+  if (el >= 90)   return { label:'CRÍTICO',    cls:'pill-danger',  row:'r-danger', ecls:'e-danger' };
+  if (el >= 45)   return { label:'TARDIO',     cls:'pill-warn',    row:'r-warn',   ecls:'e-warn' };
+  return           { label:'NO PÁTIO',    cls:'pill-info',   row:'r-info',   ecls:'e-info' };
+}
+
+// ── STATS ────────────────────────────────────────────────────────────────────
+function renderStats() {
+  const open  = rawData.filter(r => !r.cout);
+  const done  = rawData.filter(r =>  r.cout);
+  const warn  = open.filter(r => getElapsed(r) >= 45 && getElapsed(r) < 90);
+  const crit  = open.filter(r => getElapsed(r) >= 90);
+  const avg   = done.length
+    ? Math.round(done.reduce((s, r) => s + r.stay, 0) / done.length)
+    : 0;
+
+  document.getElementById('st-total').textContent = open.length;
+  document.getElementById('st-done').textContent  = done.length;
+  document.getElementById('st-warn').textContent  = warn.length;
+  document.getElementById('st-crit').textContent  = crit.length;
+  document.getElementById('st-avg').textContent   = avg || '—';
+}
+
+function updateSiteTag() {
+  const first = rawData.find(r => r.facility && r.site);
+  if (first) {
+    document.getElementById('siteTag').textContent =
+      `${first.facility} · ${first.site}`;
+  }
+}
+
+// ── FILTER & RENDER ──────────────────────────────────────────────────────────
+function setFilter(f, btn) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => {
+    b.className = 'filter-btn' + (b.dataset.f === f ? ' active' : '');
+  });
+  renderTable();
+}
+
+function renderTable() {
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  const sort   = document.getElementById('sortSel').value;
+
+  let data = rawData.filter(r => {
+    const el = getElapsed(r);
+    if (currentFilter === 'open' &&  r.cout) return false;
+    if (currentFilter === 'done' && !r.cout) return false;
+    if (currentFilter === 'warn' && (r.cout || el < 45 || el >= 90)) return false;
+    if (currentFilter === 'crit' && (r.cout || el < 90)) return false;
+    if (search) {
+      const hay = `${r.plate} ${r.carrier} ${r.driverId}`.toLowerCase();
+      if (!hay.includes(search)) return false;
+    }
+    return true;
+  });
+
+  data.sort((a, b) => {
+    switch (sort) {
+      case 'elapsed_desc': return getElapsed(b) - getElapsed(a);
+      case 'elapsed_asc':  return getElapsed(a) - getElapsed(b);
+      case 'checkin':      return (a.cin||0) - (b.cin||0);
+      case 'plate':        return a.plate.localeCompare(b.plate);
+      case 'carrier':      return a.carrier.localeCompare(b.carrier);
+    }
+    return 0;
+  });
+
+  document.getElementById('countLabel').textContent =
+    `${data.length} veículo${data.length !== 1 ? 's' : ''} exibido${data.length !== 1 ? 's' : ''}`;
+
+  const el = document.getElementById('rowsEl');
+
+  if (!data.length && rawData.length) {
+    el.innerHTML = `<div class="state-msg"><div class="icon">🔍</div><p>Nenhum veículo encontrado para o filtro atual.</p></div>`;
+    return;
+  }
+  if (!rawData.length) {
+    el.innerHTML = `<div class="state-msg"><div class="spinner"></div><p>Carregando dados…</p></div>`;
+    return;
+  }
+
+  el.innerHTML = data.map(r => {
+    const elapsed = getElapsed(r);
+    const st      = getStatus(r);
+    const elStr   = elapsed + 'min';
+    const plateHtml = r.isSDD
+      ? `<span class="sdd-badge">SDD</span>${r.plate}`
+      : r.plate;
+    const carrierShort = r.carrier.length > 24 ? r.carrier.slice(0, 23) + '…' : r.carrier;
+
+    return `<div class="row ${st.row}" onclick="openModal('${r.id}')">
+      <div class="plate">${plateHtml}</div>
+      <div>
+        <div class="carrier">${carrierShort}</div>
+        <div class="vtype">${r.vtype}</div>
+      </div>
+      <div class="t-time col-checkin">${r.cinStr}</div>
+      <div class="elapsed ${st.ecls}">${elStr}</div>
+      <div><span class="pill ${st.cls}">${st.label}</span></div>
+      <div class="t-time col-vtype" style="font-size:10px">${r.vtype}</div>
+      <div class="driver-id col-driver">${r.driverId}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── MODAL ────────────────────────────────────────────────────────────────────
+function openModal(id) {
+  const r = rawData.find(x => x.id === id);
+  if (!r) return;
+  const elapsed = getElapsed(r);
+  const st      = getStatus(r);
+
+  document.getElementById('mdPlate').textContent =
+    (r.isSDD ? 'SDD · ' : '') + r.plate;
+  document.getElementById('mdVtype').textContent = r.vtype;
+
+  const fields = [
+    ['Transportadora', r.carrier],
+    ['Transportadora ID', r.carrierId],
+    ['Motorista ID', r.driverId],
+    ['Facility / Site', `${r.facility} / ${r.site}`],
+    ['Check-in', r.cinStr || '—'],
+    ['Check-out', r.coutStr || '—'],
+    ['Permanência', elapsed + ' minutos'],
+    ['Saída estimada', r.estOut ? r.estOut.split(' ')[1] : '—'],
+    ['Operação', r.operation],
+    ['Status', `<span class="pill ${st.cls}">${st.label}</span>`],
+    ['Check-in por', r.checkinUser],
+    ['Check-out por', r.checkoutUser || '—'],
+  ];
+
+  document.getElementById('mdGrid').innerHTML = fields.map(([lbl, val], i) =>
+    `<div class="modal-field${i < 2 ? ' full' : ''}">
+      <label>${lbl}</label>
+      <value>${val}</value>
+    </div>`
+  ).join('');
+
+  document.getElementById('overlay').classList.add('open');
+}
+
+function closeModal(e) {
+  if (!e || e.target === document.getElementById('overlay')) {
+    document.getElementById('overlay').classList.remove('open');
+  }
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+});
+
+// ── CLOCK ────────────────────────────────────────────────────────────────────
+function startClock() {
+  function tick() {
+    const now = new Date();
+    document.getElementById('clockEl').textContent =
+      now.toLocaleTimeString('pt-BR');
+  }
+  tick();
+  setInterval(tick, 1000);
+}
+
+function setLiveStatus(s) {
+  const el = document.getElementById('liveStatus');
+  const map = {
+    live:    { text:'AO VIVO',   color:'var(--ok)' },
+    loading: { text:'ATUALIZANDO…', color:'var(--warn)' },
+    error:   { text:'ERRO',      color:'var(--danger)' },
+  };
+  const cfg = map[s] || map.live;
+  el.textContent = cfg.text;
+  el.style.color = cfg.color;
+}
+</script>
+</body>
+</html>

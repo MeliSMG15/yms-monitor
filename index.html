@@ -299,6 +299,50 @@
     .carrier-badge-crit { background: var(--danger-bg); color: var(--danger); }
     .carrier-badge-zero { background: var(--faint);     color: var(--muted); }
 
+    /* ── PERIOD BAR (global filter) ── */
+    .period-bar {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 16px;
+      padding: 10px 16px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+    }
+    .period-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .period-buttons { display: flex; gap: 4px; flex-wrap: wrap; }
+    .period-btn {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      padding: 6px 14px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border2);
+      background: var(--surface);
+      color: var(--muted);
+      cursor: pointer;
+      letter-spacing: .05em;
+      transition: all .15s;
+    }
+    .period-btn:hover { color: var(--text); border-color: var(--info); }
+    .period-btn.active {
+      border-color: var(--info);
+      color: var(--info);
+      background: var(--info-bg);
+    }
+    .period-hint {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--muted);
+      margin-left: auto;
+    }
+
     /* ── FILTERS ── */
     .toolbar {
       display: flex;
@@ -641,6 +685,17 @@
     </div>
   </div>
 
+  <!-- PERIOD BAR (filtra tudo: stats, transportadoras e tabela) -->
+  <div class="period-bar">
+    <span class="period-label">Período (check-in)</span>
+    <div class="period-buttons">
+      <button class="period-btn active" data-p="all" onclick="setPeriod('all',this)">TODOS</button>
+      <button class="period-btn"        data-p="am"  onclick="setPeriod('am',this)">AM 08-13h</button>
+      <button class="period-btn"        data-p="pm"  onclick="setPeriod('pm',this)">PM 13-17h</button>
+    </div>
+    <span class="period-hint" id="periodHint">— veículos no período</span>
+  </div>
+
   <!-- STATS -->
   <div class="stats-grid">
     <div class="stat-card c-info">
@@ -678,7 +733,7 @@
   <!-- CARRIERS RANKING -->
   <div class="carriers-section">
     <div class="carriers-header">
-      <span class="carriers-title">RANKING TRANSPORTADORAS NO PÁTIO</span>
+      <span class="carriers-title">RANKING TRANSPORTADORAS · CARROS +30MIN</span>
       <span class="carriers-sub" id="carriersTotal">—</span>
     </div>
     <div class="carriers-list" id="carriersList">
@@ -694,8 +749,6 @@
       <button class="filter-btn" data-f="done" onclick="setFilter('done',this)">FINALIZADOS</button>
       <button class="filter-btn" data-f="warn" onclick="setFilter('warn',this)">TARDIOS +25min</button>
       <button class="filter-btn" data-f="crit" onclick="setFilter('crit',this)">CRÍTICOS +30min</button>
-      <button class="filter-btn" data-f="am" onclick="setFilter('am',this)">AM 08-13h</button>
-      <button class="filter-btn" data-f="pm" onclick="setFilter('pm',this)">PM 13-17h</button>
     </div>
     <div class="toolbar-right">
       <div class="search-wrap">
@@ -763,10 +816,11 @@ const SHEET_ID   = '1hRVnx-G2Kw_ZoHYzCGyju914PrB2fGIKZgSHIjm8GxE';
 const SHEET_NAME = 'YMS ONLINE';
 const RANGE      = encodeURIComponent(`'${SHEET_NAME}'!A:W`);
 
-let apiKey       = localStorage.getItem('yms_api_key') || '';
-let rawData      = [];
+let apiKey        = localStorage.getItem('yms_api_key') || '';
+let rawData       = [];
 let currentFilter = 'all';
-let refreshTimer = null;
+let currentPeriod = 'all'; // 'all' | 'am' | 'pm' — filtra tudo (stats, transportadoras, tabela)
+let refreshTimer  = null;
 
 // ── BOOT ────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
@@ -924,10 +978,27 @@ function getElapsed(item) {
   return Math.max(0, diff);
 }
 
-function inHourRange(date, startHour, endHour) {
-  if (!date) return false;
-  const h = date.getHours();
-  return h >= startHour && h < endHour;
+function inPeriod(item) {
+  if (currentPeriod === 'all') return true;
+  if (!item.cin) return false;
+  const h = item.cin.getHours();
+  if (currentPeriod === 'am') return h >= 8  && h < 13;
+  if (currentPeriod === 'pm') return h >= 13 && h < 17;
+  return true;
+}
+
+function getPeriodData() {
+  return rawData.filter(inPeriod);
+}
+
+function setPeriod(p, btn) {
+  currentPeriod = p;
+  document.querySelectorAll('.period-btn').forEach(b => {
+    b.className = 'period-btn' + (b.dataset.p === p ? ' active' : '');
+  });
+  renderStats();
+  renderCarriers();
+  renderTable();
 }
 
 function getStatus(item) {
@@ -940,8 +1011,9 @@ function getStatus(item) {
 
 // ── STATS ────────────────────────────────────────────────────────────────────
 function renderStats() {
-  const open     = rawData.filter(r => !r.cout);
-  const done     = rawData.filter(r =>  r.cout);
+  const data     = getPeriodData();
+  const open     = data.filter(r => !r.cout);
+  const done     = data.filter(r =>  r.cout);
   const warn     = open.filter(r => getElapsed(r) >= 25 && getElapsed(r) < 30);
   const crit     = open.filter(r => getElapsed(r) >= 30);
   const doneWarn = done.filter(r => r.stay >= 25);
@@ -955,26 +1027,33 @@ function renderStats() {
   document.getElementById('st-crit').textContent      = crit.length;
   document.getElementById('st-avg').textContent       = avg || '—';
   document.getElementById('st-done-warn').textContent = doneWarn.length;
+
+  const hint = document.getElementById('periodHint');
+  if (hint) {
+    const periodLabel = currentPeriod === 'am' ? 'AM (08-13h)'
+                      : currentPeriod === 'pm' ? 'PM (13-17h)'
+                      : 'todos os períodos';
+    hint.textContent = `${data.length} veículo${data.length !== 1 ? 's' : ''} · ${periodLabel}`;
+  }
 }
 
-// ── CARRIERS RANKING ────────────────────────────────────────────────────────
+// ── CARRIERS RANKING (apenas carros +30min) ────────────────────────────────
 function renderCarriers() {
-  const open = rawData.filter(r => !r.cout);
+  const data = getPeriodData();
   const byCarrier = {};
-  for (const r of open) {
+  for (const r of data) {
+    if (getElapsed(r) < 30) continue;
     const name = (r.carrier || '— sem identificação').trim();
-    if (!byCarrier[name]) byCarrier[name] = { total:0, warn:0, crit:0 };
+    if (!byCarrier[name]) byCarrier[name] = { total:0, open:0, done:0 };
     byCarrier[name].total++;
-    const el = getElapsed(r);
-    if (el >= 30)      byCarrier[name].crit++;
-    else if (el >= 25) byCarrier[name].warn++;
+    if (r.cout) byCarrier[name].done++;
+    else        byCarrier[name].open++;
   }
 
   const ranked = Object.entries(byCarrier)
     .map(([name, c]) => ({ name, ...c }))
     .sort((a, b) => {
-      if (b.crit  !== a.crit)  return b.crit  - a.crit;
-      if (b.warn  !== a.warn)  return b.warn  - a.warn;
+      if (b.open !== a.open) return b.open - a.open; // prioriza quem tem ativos
       return b.total - a.total;
     })
     .slice(0, 8);
@@ -982,30 +1061,31 @@ function renderCarriers() {
   const el = document.getElementById('carriersList');
   const totalEl = document.getElementById('carriersTotal');
   const carrierCount = Object.keys(byCarrier).length;
+  const totalCars = Object.values(byCarrier).reduce((s, c) => s + c.total, 0);
 
   if (!ranked.length) {
-    el.innerHTML = '<div style="font-size:11px;color:var(--muted);padding:4px">Sem veículos no pátio</div>';
+    el.innerHTML = '<div style="font-size:11px;color:var(--muted);padding:4px">Nenhum carro com 30+ min no período selecionado</div>';
     totalEl.textContent = '0 transportadoras';
     return;
   }
 
-  totalEl.textContent = `${carrierCount} transportadora${carrierCount !== 1 ? 's' : ''} · top ${ranked.length}`;
+  totalEl.textContent = `${carrierCount} transportadora${carrierCount !== 1 ? 's' : ''} · ${totalCars} carro${totalCars !== 1 ? 's' : ''} +30min`;
 
   el.innerHTML = ranked.map((c, i) => {
-    const cls = c.crit ? 'has-crit' : (c.warn ? 'has-warn' : '');
-    const warnBadge = c.warn
-      ? `<span class="carrier-badge carrier-badge-warn">${c.warn}T</span>`
+    const cls = c.open ? 'has-crit' : 'has-warn'; // se tem ativo: vermelho. só finalizados: amarelo
+    const openBadge = c.open
+      ? `<span class="carrier-badge carrier-badge-crit" title="ativos no pátio">${c.open}A</span>`
       : `<span class="carrier-badge carrier-badge-zero">·</span>`;
-    const critBadge = c.crit
-      ? `<span class="carrier-badge carrier-badge-crit">${c.crit}C</span>`
+    const doneBadge = c.done
+      ? `<span class="carrier-badge carrier-badge-warn" title="já saíram">${c.done}F</span>`
       : `<span class="carrier-badge carrier-badge-zero">·</span>`;
     const nameShort = c.name.length > 28 ? c.name.slice(0, 27) + '…' : c.name;
-    return `<div class="carrier-row ${cls}" title="${c.name} — ${c.total} no pátio, ${c.warn} tardios, ${c.crit} críticos">
+    return `<div class="carrier-row ${cls}" title="${c.name} — ${c.total} carros +30min (${c.open} ativos, ${c.done} finalizados)">
       <span class="carrier-rank">#${i+1}</span>
       <span class="carrier-name">${nameShort}</span>
       <span class="carrier-count">${c.total}</span>
-      ${warnBadge}
-      ${critBadge}
+      ${openBadge}
+      ${doneBadge}
     </div>`;
   }).join('');
 }
@@ -1031,14 +1111,12 @@ function renderTable() {
   const search = document.getElementById('searchInput').value.toLowerCase();
   const sort   = document.getElementById('sortSel').value;
 
-  let data = rawData.filter(r => {
+  let data = getPeriodData().filter(r => {
     const el = getElapsed(r);
     if (currentFilter === 'open' &&  r.cout) return false;
     if (currentFilter === 'done' && !r.cout) return false;
     if (currentFilter === 'warn' && (r.cout || el < 25 || el >= 30)) return false;
     if (currentFilter === 'crit' && (r.cout || el < 30)) return false;
-    if (currentFilter === 'am'   && !inHourRange(r.cin, 8,  13)) return false;
-    if (currentFilter === 'pm'   && !inHourRange(r.cin, 13, 17)) return false;
     if (search) {
       const hay = `${r.plate} ${r.carrier} ${r.driverId}`.toLowerCase();
       if (!hay.includes(search)) return false;

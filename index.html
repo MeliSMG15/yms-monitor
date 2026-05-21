@@ -668,6 +668,11 @@
       <div class="stat-value" id="st-avg">—</div>
       <div class="stat-sub">dos finalizados (min)</div>
     </div>
+    <div class="stat-card c-warn">
+      <div class="stat-label">finalizados +30min</div>
+      <div class="stat-value" id="st-done-warn">—</div>
+      <div class="stat-sub">tardios já saídos</div>
+    </div>
   </div>
 
   <!-- CARRIERS RANKING -->
@@ -927,19 +932,21 @@ function getStatus(item) {
 
 // ── STATS ────────────────────────────────────────────────────────────────────
 function renderStats() {
-  const open  = rawData.filter(r => !r.cout);
-  const done  = rawData.filter(r =>  r.cout);
-  const warn  = open.filter(r => getElapsed(r) >= 30 && getElapsed(r) < 90);
-  const crit  = open.filter(r => getElapsed(r) >= 90);
-  const avg   = done.length
+  const open     = rawData.filter(r => !r.cout);
+  const done     = rawData.filter(r =>  r.cout);
+  const warn     = open.filter(r => getElapsed(r) >= 30 && getElapsed(r) < 90);
+  const crit     = open.filter(r => getElapsed(r) >= 90);
+  const doneWarn = done.filter(r => r.stay >= 30);
+  const avg      = done.length
     ? Math.round(done.reduce((s, r) => s + r.stay, 0) / done.length)
     : 0;
 
-  document.getElementById('st-total').textContent = open.length;
-  document.getElementById('st-done').textContent  = done.length;
-  document.getElementById('st-warn').textContent  = warn.length;
-  document.getElementById('st-crit').textContent  = crit.length;
-  document.getElementById('st-avg').textContent   = avg || '—';
+  document.getElementById('st-total').textContent     = open.length;
+  document.getElementById('st-done').textContent      = done.length;
+  document.getElementById('st-warn').textContent      = warn.length;
+  document.getElementById('st-crit').textContent      = crit.length;
+  document.getElementById('st-avg').textContent       = avg || '—';
+  document.getElementById('st-done-warn').textContent = doneWarn.length;
 }
 
 // ── CARRIERS RANKING ────────────────────────────────────────────────────────

@@ -61,24 +61,24 @@
     .topbar-left   { display: flex; align-items: center; gap: 14px; justify-self: start; }
     .topbar-center { display: flex; align-items: center; justify-self: center; }
     .logo {
-      font-size: 26px;
-      font-weight: 800;
-      letter-spacing: .14em;
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: .22em;
       color: var(--text);
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
       text-rendering: optimizeLegibility;
-      line-height: 1;
+      line-height: 1.15;
       white-space: nowrap;
+      word-spacing: .15em;
     }
     .logo span {
       color: var(--info);
-      text-shadow:
-        0 0 14px rgba(56,189,248,.55),
-        0 0 32px rgba(56,189,248,.25);
+      font-weight: 800;
+      text-shadow: 0 0 18px rgba(56,189,248,.28);
     }
     @media (max-width: 720px) {
-      .logo { font-size: 20px; letter-spacing: .1em; }
+      .logo { font-size: 18px; letter-spacing: .16em; }
       .topbar { height: 58px; }
     }
     .site-tag {

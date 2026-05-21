@@ -219,23 +219,43 @@
     .stat-card.c-warn::before   { background: var(--warn); }
     .stat-card.c-danger::before { background: var(--danger); }
     .stat-label {
-      font-size: 10px;
-      text-transform: uppercase;
-      letter-spacing: .1em;
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: .01em;
       color: var(--muted);
-      margin-bottom: 8px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      line-height: 1.2;
+    }
+    .stat-threshold {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0;
+      padding: 2px 7px;
+      border-radius: 4px;
+      background: var(--faint);
+      color: var(--text);
     }
     .stat-value {
       font-family: var(--font-mono);
-      font-size: 28px;
+      font-size: 30px;
       font-weight: 600;
       line-height: 1;
+      letter-spacing: -.01em;
     }
     .stat-card.c-info .stat-value   { color: var(--info); }
     .stat-card.c-ok .stat-value     { color: var(--ok); }
     .stat-card.c-warn .stat-value   { color: var(--warn); }
     .stat-card.c-danger .stat-value { color: var(--danger); }
-    .stat-sub { font-size: 11px; color: var(--muted); margin-top: 5px; }
+    .stat-sub {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+    .stat-sub::first-letter { text-transform: uppercase; }
 
     /* ── CARRIERS RANKING ── */
     .carriers-section {
@@ -717,32 +737,32 @@
   <!-- STATS -->
   <div class="stats-grid">
     <div class="stat-card c-info">
-      <div class="stat-label">no pátio agora</div>
+      <div class="stat-label"><span>No pátio agora</span></div>
       <div class="stat-value" id="st-total">—</div>
       <div class="stat-sub">veículos ativos</div>
     </div>
     <div class="stat-card c-ok">
-      <div class="stat-label">finalizados hoje</div>
+      <div class="stat-label"><span>Finalizados hoje</span></div>
       <div class="stat-value" id="st-done">—</div>
       <div class="stat-sub">com checkout</div>
     </div>
     <div class="stat-card c-warn">
-      <div class="stat-label">tardios +25min</div>
+      <div class="stat-label"><span>Tardios</span><span class="stat-threshold">+25 min</span></div>
       <div class="stat-value" id="st-warn">—</div>
       <div class="stat-sub">atenção</div>
     </div>
     <div class="stat-card c-danger">
-      <div class="stat-label">críticos +30min</div>
+      <div class="stat-label"><span>Críticos</span><span class="stat-threshold">+30 min</span></div>
       <div class="stat-value" id="st-crit">—</div>
       <div class="stat-sub">ação imediata</div>
     </div>
     <div class="stat-card c-info" style="--info:#a78bfa;--info-bg:rgba(167,139,250,.1);">
-      <div class="stat-label">permanência média</div>
+      <div class="stat-label"><span>Permanência média</span></div>
       <div class="stat-value" id="st-avg">—</div>
       <div class="stat-sub">dos finalizados (min)</div>
     </div>
     <div class="stat-card c-danger">
-      <div class="stat-label">finalizados +30min</div>
+      <div class="stat-label"><span>Finalizados</span><span class="stat-threshold">+30 min</span></div>
       <div class="stat-value" id="st-done-warn">—</div>
       <div class="stat-sub">críticos já saídos</div>
     </div>

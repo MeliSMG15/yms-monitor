@@ -221,6 +221,84 @@
     .stat-card.c-danger .stat-value { color: var(--danger); }
     .stat-sub { font-size: 11px; color: var(--muted); margin-top: 5px; }
 
+    /* ── CARRIERS RANKING ── */
+    .carriers-section {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 14px 16px;
+      margin-bottom: 20px;
+    }
+    .carriers-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .carriers-title {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: var(--muted);
+    }
+    .carriers-sub {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--muted);
+    }
+    .carriers-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+      gap: 8px;
+    }
+    .carrier-row {
+      display: grid;
+      grid-template-columns: 28px 1fr auto auto auto;
+      gap: 10px;
+      align-items: center;
+      padding: 9px 12px;
+      background: var(--surface);
+      border-radius: var(--radius);
+      border-left: 3px solid var(--info);
+      transition: border-color .15s;
+    }
+    .carrier-row.has-warn { border-left-color: var(--warn); }
+    .carrier-row.has-crit { border-left-color: var(--danger); }
+    .carrier-rank {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .carrier-name {
+      font-size: 12px;
+      color: var(--text);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .carrier-count {
+      font-family: var(--font-mono);
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--info);
+      min-width: 24px;
+      text-align: right;
+    }
+    .carrier-badge {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-weight: 600;
+      min-width: 28px;
+      text-align: center;
+      letter-spacing: .03em;
+    }
+    .carrier-badge-warn { background: var(--warn-bg);   color: var(--warn); }
+    .carrier-badge-crit { background: var(--danger-bg); color: var(--danger); }
+    .carrier-badge-zero { background: var(--faint);     color: var(--muted); }
+
     /* ── FILTERS ── */
     .toolbar {
       display: flex;
@@ -592,6 +670,17 @@
     </div>
   </div>
 
+  <!-- CARRIERS RANKING -->
+  <div class="carriers-section">
+    <div class="carriers-header">
+      <span class="carriers-title">RANKING TRANSPORTADORAS NO PÁTIO</span>
+      <span class="carriers-sub" id="carriersTotal">—</span>
+    </div>
+    <div class="carriers-list" id="carriersList">
+      <div style="font-size:11px;color:var(--muted);padding:4px">Aguardando dados…</div>
+    </div>
+  </div>
+
   <!-- TOOLBAR -->
   <div class="toolbar">
     <div class="filter-group">
@@ -681,7 +770,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('apiKeyInput').value = '';
   }
   startClock();
-  setInterval(() => renderTable(), 10000); // rerender elapsed every 10s
+  setInterval(() => { renderStats(); renderCarriers(); renderTable(); }, 10000); // rerender elapsed every 10s
 });
 
 // ── CONFIG ──────────────────────────────────────────────────────────────────
@@ -711,6 +800,7 @@ async function fetchData() {
     const json = await res.json();
     rawData = parseSheet(json.values || []);
     renderStats();
+    renderCarriers();
     renderTable();
     updateSiteTag();
     setLiveStatus('live');
@@ -850,6 +940,59 @@ function renderStats() {
   document.getElementById('st-warn').textContent  = warn.length;
   document.getElementById('st-crit').textContent  = crit.length;
   document.getElementById('st-avg').textContent   = avg || '—';
+}
+
+// ── CARRIERS RANKING ────────────────────────────────────────────────────────
+function renderCarriers() {
+  const open = rawData.filter(r => !r.cout);
+  const byCarrier = {};
+  for (const r of open) {
+    const name = (r.carrier || '— sem identificação').trim();
+    if (!byCarrier[name]) byCarrier[name] = { total:0, warn:0, crit:0 };
+    byCarrier[name].total++;
+    const el = getElapsed(r);
+    if (el >= 90)      byCarrier[name].crit++;
+    else if (el >= 30) byCarrier[name].warn++;
+  }
+
+  const ranked = Object.entries(byCarrier)
+    .map(([name, c]) => ({ name, ...c }))
+    .sort((a, b) => {
+      if (b.crit  !== a.crit)  return b.crit  - a.crit;
+      if (b.warn  !== a.warn)  return b.warn  - a.warn;
+      return b.total - a.total;
+    })
+    .slice(0, 8);
+
+  const el = document.getElementById('carriersList');
+  const totalEl = document.getElementById('carriersTotal');
+  const carrierCount = Object.keys(byCarrier).length;
+
+  if (!ranked.length) {
+    el.innerHTML = '<div style="font-size:11px;color:var(--muted);padding:4px">Sem veículos no pátio</div>';
+    totalEl.textContent = '0 transportadoras';
+    return;
+  }
+
+  totalEl.textContent = `${carrierCount} transportadora${carrierCount !== 1 ? 's' : ''} · top ${ranked.length}`;
+
+  el.innerHTML = ranked.map((c, i) => {
+    const cls = c.crit ? 'has-crit' : (c.warn ? 'has-warn' : '');
+    const warnBadge = c.warn
+      ? `<span class="carrier-badge carrier-badge-warn">${c.warn}T</span>`
+      : `<span class="carrier-badge carrier-badge-zero">·</span>`;
+    const critBadge = c.crit
+      ? `<span class="carrier-badge carrier-badge-crit">${c.crit}C</span>`
+      : `<span class="carrier-badge carrier-badge-zero">·</span>`;
+    const nameShort = c.name.length > 28 ? c.name.slice(0, 27) + '…' : c.name;
+    return `<div class="carrier-row ${cls}" title="${c.name} — ${c.total} no pátio, ${c.warn} tardios, ${c.crit} críticos">
+      <span class="carrier-rank">#${i+1}</span>
+      <span class="carrier-name">${nameShort}</span>
+      <span class="carrier-count">${c.total}</span>
+      ${warnBadge}
+      ${critBadge}
+    </div>`;
+  }).join('');
 }
 
 function updateSiteTag() {

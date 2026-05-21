@@ -576,7 +576,7 @@
       <div class="stat-sub">com checkout</div>
     </div>
     <div class="stat-card c-warn">
-      <div class="stat-label">tardios +45min</div>
+      <div class="stat-label">tardios +30min</div>
       <div class="stat-value" id="st-warn">—</div>
       <div class="stat-sub">atenção</div>
     </div>
@@ -598,7 +598,7 @@
       <button class="filter-btn active" data-f="all" onclick="setFilter('all',this)">TODOS</button>
       <button class="filter-btn" data-f="open" onclick="setFilter('open',this)">SEM CHECKOUT</button>
       <button class="filter-btn" data-f="done" onclick="setFilter('done',this)">FINALIZADOS</button>
-      <button class="filter-btn" data-f="warn" onclick="setFilter('warn',this)">TARDIOS +45min</button>
+      <button class="filter-btn" data-f="warn" onclick="setFilter('warn',this)">TARDIOS +30min</button>
       <button class="filter-btn" data-f="crit" onclick="setFilter('crit',this)">CRÍTICOS +90min</button>
     </div>
     <div class="toolbar-right">
@@ -831,7 +831,7 @@ function getStatus(item) {
   const el = getElapsed(item);
   if (item.cout)  return { label:'FINALIZADO', cls:'pill-ok',     row:'r-ok',     ecls:'e-done' };
   if (el >= 90)   return { label:'CRÍTICO',    cls:'pill-danger',  row:'r-danger', ecls:'e-danger' };
-  if (el >= 45)   return { label:'TARDIO',     cls:'pill-warn',    row:'r-warn',   ecls:'e-warn' };
+  if (el >= 30)   return { label:'TARDIO',     cls:'pill-warn',    row:'r-warn',   ecls:'e-warn' };
   return           { label:'NO PÁTIO',    cls:'pill-info',   row:'r-info',   ecls:'e-info' };
 }
 
@@ -839,7 +839,7 @@ function getStatus(item) {
 function renderStats() {
   const open  = rawData.filter(r => !r.cout);
   const done  = rawData.filter(r =>  r.cout);
-  const warn  = open.filter(r => getElapsed(r) >= 45 && getElapsed(r) < 90);
+  const warn  = open.filter(r => getElapsed(r) >= 30 && getElapsed(r) < 90);
   const crit  = open.filter(r => getElapsed(r) >= 90);
   const avg   = done.length
     ? Math.round(done.reduce((s, r) => s + r.stay, 0) / done.length)
@@ -877,7 +877,7 @@ function renderTable() {
     const el = getElapsed(r);
     if (currentFilter === 'open' &&  r.cout) return false;
     if (currentFilter === 'done' && !r.cout) return false;
-    if (currentFilter === 'warn' && (r.cout || el < 45 || el >= 90)) return false;
+    if (currentFilter === 'warn' && (r.cout || el < 30 || el >= 90)) return false;
     if (currentFilter === 'crit' && (r.cout || el < 90)) return false;
     if (search) {
       const hay = `${r.plate} ${r.carrier} ${r.driverId}`.toLowerCase();

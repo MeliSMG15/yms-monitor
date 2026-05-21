@@ -654,12 +654,12 @@
       <div class="stat-sub">com checkout</div>
     </div>
     <div class="stat-card c-warn">
-      <div class="stat-label">tardios +30min</div>
+      <div class="stat-label">tardios +25min</div>
       <div class="stat-value" id="st-warn">—</div>
       <div class="stat-sub">atenção</div>
     </div>
     <div class="stat-card c-danger">
-      <div class="stat-label">críticos +90min</div>
+      <div class="stat-label">críticos +30min</div>
       <div class="stat-value" id="st-crit">—</div>
       <div class="stat-sub">ação imediata</div>
     </div>
@@ -669,7 +669,7 @@
       <div class="stat-sub">dos finalizados (min)</div>
     </div>
     <div class="stat-card c-warn">
-      <div class="stat-label">finalizados +30min</div>
+      <div class="stat-label">finalizados +25min</div>
       <div class="stat-value" id="st-done-warn">—</div>
       <div class="stat-sub">tardios já saídos</div>
     </div>
@@ -692,8 +692,10 @@
       <button class="filter-btn active" data-f="all" onclick="setFilter('all',this)">TODOS</button>
       <button class="filter-btn" data-f="open" onclick="setFilter('open',this)">SEM CHECKOUT</button>
       <button class="filter-btn" data-f="done" onclick="setFilter('done',this)">FINALIZADOS</button>
-      <button class="filter-btn" data-f="warn" onclick="setFilter('warn',this)">TARDIOS +30min</button>
-      <button class="filter-btn" data-f="crit" onclick="setFilter('crit',this)">CRÍTICOS +90min</button>
+      <button class="filter-btn" data-f="warn" onclick="setFilter('warn',this)">TARDIOS +25min</button>
+      <button class="filter-btn" data-f="crit" onclick="setFilter('crit',this)">CRÍTICOS +30min</button>
+      <button class="filter-btn" data-f="am" onclick="setFilter('am',this)">AM 08-13h</button>
+      <button class="filter-btn" data-f="pm" onclick="setFilter('pm',this)">PM 13-17h</button>
     </div>
     <div class="toolbar-right">
       <div class="search-wrap">
@@ -922,11 +924,17 @@ function getElapsed(item) {
   return Math.max(0, diff);
 }
 
+function inHourRange(date, startHour, endHour) {
+  if (!date) return false;
+  const h = date.getHours();
+  return h >= startHour && h < endHour;
+}
+
 function getStatus(item) {
   const el = getElapsed(item);
   if (item.cout)  return { label:'FINALIZADO', cls:'pill-ok',     row:'r-ok',     ecls:'e-done' };
-  if (el >= 90)   return { label:'CRÍTICO',    cls:'pill-danger',  row:'r-danger', ecls:'e-danger' };
-  if (el >= 30)   return { label:'TARDIO',     cls:'pill-warn',    row:'r-warn',   ecls:'e-warn' };
+  if (el >= 30)   return { label:'CRÍTICO',    cls:'pill-danger',  row:'r-danger', ecls:'e-danger' };
+  if (el >= 25)   return { label:'TARDIO',     cls:'pill-warn',    row:'r-warn',   ecls:'e-warn' };
   return           { label:'NO PÁTIO',    cls:'pill-info',   row:'r-info',   ecls:'e-info' };
 }
 
@@ -934,9 +942,9 @@ function getStatus(item) {
 function renderStats() {
   const open     = rawData.filter(r => !r.cout);
   const done     = rawData.filter(r =>  r.cout);
-  const warn     = open.filter(r => getElapsed(r) >= 30 && getElapsed(r) < 90);
-  const crit     = open.filter(r => getElapsed(r) >= 90);
-  const doneWarn = done.filter(r => r.stay >= 30);
+  const warn     = open.filter(r => getElapsed(r) >= 25 && getElapsed(r) < 30);
+  const crit     = open.filter(r => getElapsed(r) >= 30);
+  const doneWarn = done.filter(r => r.stay >= 25);
   const avg      = done.length
     ? Math.round(done.reduce((s, r) => s + r.stay, 0) / done.length)
     : 0;
@@ -958,8 +966,8 @@ function renderCarriers() {
     if (!byCarrier[name]) byCarrier[name] = { total:0, warn:0, crit:0 };
     byCarrier[name].total++;
     const el = getElapsed(r);
-    if (el >= 90)      byCarrier[name].crit++;
-    else if (el >= 30) byCarrier[name].warn++;
+    if (el >= 30)      byCarrier[name].crit++;
+    else if (el >= 25) byCarrier[name].warn++;
   }
 
   const ranked = Object.entries(byCarrier)
@@ -1027,8 +1035,10 @@ function renderTable() {
     const el = getElapsed(r);
     if (currentFilter === 'open' &&  r.cout) return false;
     if (currentFilter === 'done' && !r.cout) return false;
-    if (currentFilter === 'warn' && (r.cout || el < 30 || el >= 90)) return false;
-    if (currentFilter === 'crit' && (r.cout || el < 90)) return false;
+    if (currentFilter === 'warn' && (r.cout || el < 25 || el >= 30)) return false;
+    if (currentFilter === 'crit' && (r.cout || el < 30)) return false;
+    if (currentFilter === 'am'   && !inHourRange(r.cin, 8,  13)) return false;
+    if (currentFilter === 'pm'   && !inHourRange(r.cin, 13, 17)) return false;
     if (search) {
       const hay = `${r.plate} ${r.carrier} ${r.driverId}`.toLowerCase();
       if (!hay.includes(search)) return false;

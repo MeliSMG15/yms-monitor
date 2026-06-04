@@ -729,7 +729,8 @@
     <div class="period-buttons">
       <button class="period-btn active" data-p="all" onclick="setPeriod('all',this)">TODOS</button>
       <button class="period-btn"        data-p="am"  onclick="setPeriod('am',this)">AM 08-13h</button>
-      <button class="period-btn"        data-p="pm"  onclick="setPeriod('pm',this)">PM 13-17h</button>
+      <button class="period-btn"        data-p="pm"  onclick="setPeriod('pm',this)">PM 13-16h</button>
+      <button class="period-btn"        data-p="sd"  onclick="setPeriod('sd',this)">SD 16-17:30h</button>
     </div>
     <span class="period-hint" id="periodHint">— veículos no período</span>
   </div>
@@ -857,7 +858,7 @@ const RANGE      = encodeURIComponent(`'${SHEET_NAME}'!A:W`);
 let apiKey        = localStorage.getItem('yms_api_key') || '';
 let rawData       = [];
 let currentFilter = 'all';
-let currentPeriod = 'all'; // 'all' | 'am' | 'pm' — filtra tudo (stats, transportadoras, tabela)
+let currentPeriod = 'all'; // 'all' | 'am' | 'pm' | 'sd' — filtra tudo (stats, transportadoras, tabela)
 let refreshTimer  = null;
 
 // ── BOOT ────────────────────────────────────────────────────────────────────
@@ -1019,9 +1020,10 @@ function getElapsed(item) {
 function inPeriod(item) {
   if (currentPeriod === 'all') return true;
   if (!item.cin) return false;
-  const h = item.cin.getHours();
-  if (currentPeriod === 'am') return h >= 8  && h < 13;
-  if (currentPeriod === 'pm') return h >= 13 && h < 17;
+  const mins = item.cin.getHours() * 60 + item.cin.getMinutes();
+  if (currentPeriod === 'am') return mins >=  8*60 && mins < 13*60;
+  if (currentPeriod === 'pm') return mins >= 13*60 && mins < 16*60;
+  if (currentPeriod === 'sd') return mins >= 16*60 && mins < 17*60 + 30;
   return true;
 }
 
@@ -1069,7 +1071,8 @@ function renderStats() {
   const hint = document.getElementById('periodHint');
   if (hint) {
     const periodLabel = currentPeriod === 'am' ? 'AM (08-13h)'
-                      : currentPeriod === 'pm' ? 'PM (13-17h)'
+                      : currentPeriod === 'pm' ? 'PM (13-16h)'
+                      : currentPeriod === 'sd' ? 'SD (16-17:30h)'
                       : 'todos os períodos';
     hint.textContent = `${data.length} veículo${data.length !== 1 ? 's' : ''} · ${periodLabel}`;
   }

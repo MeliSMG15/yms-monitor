@@ -272,6 +272,165 @@
       font-weight: 500;
     }
 
+    /* ── TMC DASHBOARD ── */
+    .tmc-dashboard {
+      background: linear-gradient(135deg, #FFFFFF 0%, #F4F8FF 100%);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 22px 28px 24px;
+      margin: 0 auto 22px;
+      max-width: 760px;
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+    }
+    .tmc-accent {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 5px;
+      background: linear-gradient(90deg, var(--ok) 0%, var(--ok) 50%, var(--danger) 50%, var(--danger) 100%);
+    }
+    .tmc-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .tmc-title {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--text-strong);
+      letter-spacing: .06em;
+      line-height: 1.2;
+    }
+    .tmc-subtitle {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .04em;
+      color: var(--muted);
+      margin-left: 6px;
+      text-transform: none;
+    }
+    .tmc-meta {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 500;
+      margin-top: 3px;
+    }
+    .tmc-threshold-chip {
+      font-family: 'Courier New', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 6px 12px;
+      border-radius: 6px;
+      background: var(--primary-bg);
+      color: var(--primary-dark);
+      border: 1px solid rgba(52,131,250,.25);
+      letter-spacing: .03em;
+      white-space: nowrap;
+    }
+    .tmc-bar {
+      display: flex;
+      height: 22px;
+      background: var(--border);
+      border-radius: 11px;
+      overflow: hidden;
+      margin-bottom: 22px;
+      box-shadow: inset 0 1px 2px rgba(45,50,119,.08);
+    }
+    .tmc-bar-fill {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 800;
+      color: #fff;
+      transition: width .4s cubic-bezier(.4,0,.2,1);
+      white-space: nowrap;
+      overflow: hidden;
+    }
+    .tmc-in-fill  { background: linear-gradient(90deg, #15803D, #22C55E); }
+    .tmc-out-fill { background: linear-gradient(90deg, #DC2626, #EF4444); }
+    .tmc-bar.empty .tmc-bar-fill { width: 0 !important; }
+
+    .tmc-stats {
+      display: grid;
+      grid-template-columns: 1fr 1px 1fr;
+      gap: 18px;
+      align-items: center;
+    }
+    .tmc-stat {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 8px 4px;
+    }
+    .tmc-stat-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      box-shadow: var(--shadow-sm);
+    }
+    .tmc-stat-icon svg { width: 24px; height: 24px; }
+    .tmc-stat.tmc-in .tmc-stat-icon  { background: var(--ok-bg);     color: var(--ok-text); }
+    .tmc-stat.tmc-out .tmc-stat-icon { background: var(--danger-bg); color: var(--danger-text); }
+    .tmc-stat-body { flex: 1; min-width: 0; }
+    .tmc-stat-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--muted);
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .tmc-stat-tag {
+      font-family: 'Courier New', monospace;
+      font-size: 9px;
+      padding: 1px 6px;
+      border-radius: 3px;
+      letter-spacing: .04em;
+      background: var(--surface-alt);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .tmc-stat-value {
+      font-size: 42px;
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -.03em;
+    }
+    .tmc-stat.tmc-in  .tmc-stat-value { color: var(--ok-text); }
+    .tmc-stat.tmc-out .tmc-stat-value { color: var(--danger-text); }
+    .tmc-stat-detail {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 5px;
+      font-weight: 600;
+      font-family: 'Courier New', monospace;
+    }
+    .tmc-divider {
+      width: 1px;
+      align-self: stretch;
+      background: var(--border);
+    }
+
+    @media (max-width: 600px) {
+      .tmc-dashboard { padding: 18px 18px 22px; }
+      .tmc-stats { grid-template-columns: 1fr; gap: 12px; }
+      .tmc-divider { display: none; }
+      .tmc-stat-value { font-size: 34px; }
+    }
+
     /* ── CARRIERS RANKING ── */
     .carriers-section {
       background: var(--card);
@@ -732,7 +891,7 @@
   </div>
   <div class="topbar-right">
     <span class="clock" id="clockEl">--:--:--</span>
-    <a class="icon-btn yellow" href="https://docs.google.com/spreadsheets/d/1hRVnx-G2Kw_ZoHYzCGyju914PrB2fGIKZgSHIjm8GxE/edit?gid=0#gid=0"
+    <a class="icon-btn yellow" href="https://docs.google.com/spreadsheets/d/1h1bkbhTNHHb4UWWJzzhWUbpX4b2cL3tAyernR7M5XS4/edit?gid=332674366#gid=332674366"
        target="_blank" rel="noopener noreferrer" title="Abrir planilha YMS no Google Sheets">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
         <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
@@ -797,17 +956,56 @@
       <div class="stat-value" id="st-done-warn">—</div>
       <div class="stat-sub">críticos já saídos</div>
     </div>
-    <div class="stat-card c-danger">
-      <div class="stat-label"><span>Fora do TMC</span><span class="stat-threshold">≥30 min</span></div>
-      <div class="stat-value" id="st-tmc-out">—</div>
-      <div class="stat-sub" id="st-tmc-out-sub">— · sem MeliOne</div>
-    </div>
-    <div class="stat-card c-ok">
-      <div class="stat-label"><span>Dentro do TMC</span><span class="stat-threshold">&lt;30 min</span></div>
-      <div class="stat-value" id="st-tmc-in">—</div>
-      <div class="stat-sub" id="st-tmc-in-sub">— · sem MeliOne</div>
-    </div>
   </div>
+
+  <!-- TMC DASHBOARD (destaque) -->
+  <section class="tmc-dashboard">
+    <div class="tmc-accent"></div>
+    <div class="tmc-header">
+      <div>
+        <div class="tmc-title">TMC <span class="tmc-subtitle">Tempo Máximo de Carregamento</span></div>
+        <div class="tmc-meta" id="tmcMeta">— finalizados · sem MeliOne</div>
+      </div>
+      <div class="tmc-threshold-chip">Alvo: &lt; 30 min</div>
+    </div>
+
+    <div class="tmc-bar" id="tmcBar">
+      <div class="tmc-bar-fill tmc-in-fill"  id="tmcBarIn"  style="width:0%"></div>
+      <div class="tmc-bar-fill tmc-out-fill" id="tmcBarOut" style="width:0%"></div>
+    </div>
+
+    <div class="tmc-stats">
+      <div class="tmc-stat tmc-in">
+        <div class="tmc-stat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        </div>
+        <div class="tmc-stat-body">
+          <div class="tmc-stat-label">Dentro do TMC <span class="tmc-stat-tag">&lt; 30 min</span></div>
+          <div class="tmc-stat-value" id="tmcInValue">—</div>
+          <div class="tmc-stat-detail" id="tmcInDetail">— finalizados</div>
+        </div>
+      </div>
+
+      <div class="tmc-divider"></div>
+
+      <div class="tmc-stat tmc-out">
+        <div class="tmc-stat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+        </div>
+        <div class="tmc-stat-body">
+          <div class="tmc-stat-label">Fora do TMC <span class="tmc-stat-tag">≥ 30 min</span></div>
+          <div class="tmc-stat-value" id="tmcOutValue">—</div>
+          <div class="tmc-stat-detail" id="tmcOutDetail">— finalizados</div>
+        </div>
+      </div>
+    </div>
+  </section>
 
   <!-- CARRIERS RANKING (carros +30min) -->
   <div class="carriers-section">
@@ -1075,10 +1273,28 @@ function renderStats() {
   document.getElementById('st-crit').textContent      = crit.length;
   document.getElementById('st-avg').textContent       = avg || '—';
   document.getElementById('st-done-warn').textContent = doneWarn.length;
-  document.getElementById('st-tmc-out').textContent   = doneTMC.length ? tmcOutPct.toFixed(1) + '%' : '—';
-  document.getElementById('st-tmc-in').textContent    = doneTMC.length ? tmcInPct.toFixed(1)  + '%' : '—';
-  document.getElementById('st-tmc-out-sub').textContent = `${tmcOut} / ${doneTMC.length} finalizados · sem MeliOne`;
-  document.getElementById('st-tmc-in-sub').textContent  = `${tmcIn} / ${doneTMC.length} finalizados · sem MeliOne`;
+  // TMC Dashboard
+  const tmcBar  = document.getElementById('tmcBar');
+  const barIn   = document.getElementById('tmcBarIn');
+  const barOut  = document.getElementById('tmcBarOut');
+  document.getElementById('tmcInValue').textContent  = doneTMC.length ? tmcInPct.toFixed(1)  + '%' : '—';
+  document.getElementById('tmcOutValue').textContent = doneTMC.length ? tmcOutPct.toFixed(1) + '%' : '—';
+  document.getElementById('tmcInDetail').textContent  = `${tmcIn} ${tmcIn === 1 ? 'finalizado' : 'finalizados'}`;
+  document.getElementById('tmcOutDetail').textContent = `${tmcOut} ${tmcOut === 1 ? 'finalizado' : 'finalizados'}`;
+  document.getElementById('tmcMeta').textContent = doneTMC.length
+    ? `${doneTMC.length} finalizado${doneTMC.length !== 1 ? 's' : ''} no período · MeliOne excluído da base`
+    : 'sem finalizados elegíveis no período';
+  if (doneTMC.length) {
+    tmcBar.classList.remove('empty');
+    barIn.style.width  = tmcInPct + '%';
+    barOut.style.width = tmcOutPct + '%';
+    barIn.textContent  = tmcInPct  >= 8 ? tmcInPct.toFixed(0)  + '%' : '';
+    barOut.textContent = tmcOutPct >= 8 ? tmcOutPct.toFixed(0) + '%' : '';
+  } else {
+    tmcBar.classList.add('empty');
+    barIn.textContent = '';
+    barOut.textContent = '';
+  }
 
   const hint = document.getElementById('periodHint');
   if (hint) {

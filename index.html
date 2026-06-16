@@ -1558,24 +1558,59 @@ function setLiveStatus(s) {
 }
 
 // ── BIGQUERY REFRESH (via Apps Script Web App) ──────────────────────────────
+// Usa popup window em vez de fetch porque a URL eh restrita a @mercadolivre.com
+// e fetch cross-origin nao carrega os cookies de sessao do Google.
+// O popup, sendo uma janela top-level, manda os cookies e a auth funciona.
+function triggerBQRefresh() {
+  return new Promise((resolve) => {
+    const w = 420, h = 180;
+    const left = Math.max(0, Math.floor(screen.width / 2 - w / 2));
+    const top  = Math.max(0, Math.floor(screen.height / 2 - h / 2));
+    const popup = window.open(
+      BQ_REFRESH_URL,
+      'bqRefresh',
+      `width=${w},height=${h},left=${left},top=${top},resizable=no,scrollbars=no`
+    );
+
+    if (!popup) {
+      console.warn('Popup bloqueado. Habilite popups para este site.');
+      alert('O navegador bloqueou o popup. Permita popups para melismg15.github.io e tente de novo.');
+      resolve(false);
+      return;
+    }
+
+    // monitora ate fechar (Apps Script retorna HTML com window.close())
+    const checkInterval = setInterval(() => {
+      if (popup.closed) {
+        clearInterval(checkInterval);
+        resolve(true);
+      }
+    }, 200);
+
+    // safety timeout: fecha forçado depois de 15s
+    setTimeout(() => {
+      if (popup && !popup.closed) {
+        try { popup.close(); } catch (_) {}
+      }
+      clearInterval(checkInterval);
+      resolve(true);
+    }, 15000);
+  });
+}
+
 async function fullRefresh() {
   if (isRefreshing) return;
   isRefreshing = true;
-
-  // bloqueia o auto-refresh enquanto manualmente atualizando
   if (refreshTimer) { clearTimeout(refreshTimer); refreshTimer = null; }
 
   try {
     setLiveStatus('refreshing');
-    // no-cors = fire-and-forget. Apps Script dispara o refreshAllDataSources e retorna.
-    // Não conseguimos ler a resposta mas o trigger acontece.
-    await fetch(BQ_REFRESH_URL, { mode: 'no-cors', cache: 'no-store' });
+    await triggerBQRefresh();
 
-    // Aguarda o BigQuery completar a query (refresh é async no Sheets)
+    // depois do popup fechar, espera um pouco pro BigQuery propagar os dados
     setLiveStatus('waiting');
     await new Promise(r => setTimeout(r, BQ_WAIT_MS));
 
-    // Agora busca os dados frescos
     await fetchData();
   } catch (e) {
     console.error('Refresh error:', e);

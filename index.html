@@ -900,7 +900,7 @@
       </svg>
       PLANILHA YMS
     </a>
-    <button class="icon-btn" onclick="fetchData()" title="Recarregar dados">
+    <button class="icon-btn" onclick="fullRefresh()" title="Atualiza a query BigQuery na planilha e recarrega os dados aqui">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
         <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
         <path d="M3 3v5h5"/>
@@ -1104,10 +1104,15 @@ const SHEET_ID   = '1hRVnx-G2Kw_ZoHYzCGyju914PrB2fGIKZgSHIjm8GxE';
 const SHEET_NAME = 'YMS ONLINE';
 const RANGE      = encodeURIComponent(`'${SHEET_NAME}'!A:W`);
 
+// Apps Script Web App que faz refreshAllDataSources() na planilha
+const BQ_REFRESH_URL = 'https://script.google.com/a/macros/mercadolivre.com/s/AKfycbyUC4US1ww0VGu_Nr0sxN-LeaJb2Mk5Fdf6cpG_1aA4hqImHgWN-qcg0SsPWpbV733k/exec';
+const BQ_WAIT_MS = 6000; // aguarda 6s pra query rodar antes de buscar dados
+
 let rawData       = [];
 let currentFilter = 'all';
 let currentPeriod = 'all';
 let refreshTimer  = null;
+let isRefreshing  = false;
 
 function isMeliOne(item) {
   return /melione|meli\s*one/i.test(item.vtype || '');
@@ -1541,14 +1546,45 @@ function startClock() {
 function setLiveStatus(s) {
   const el = document.getElementById('liveStatus');
   const map = {
-    live:    { text:'AO VIVO',      color:'var(--ok)' },
-    loading: { text:'ATUALIZANDO…', color:'var(--warn-text)' },
-    error:   { text:'ERRO',         color:'var(--danger)' },
+    live:        { text:'AO VIVO',         color:'var(--ok)' },
+    loading:     { text:'ATUALIZANDO…',    color:'var(--warn-text)' },
+    refreshing:  { text:'ATUALIZANDO BQ…', color:'var(--warn-text)' },
+    waiting:     { text:'AGUARDANDO BQ…',  color:'var(--warn-text)' },
+    error:       { text:'ERRO',            color:'var(--danger)' },
   };
   const cfg = map[s] || map.live;
   el.textContent = cfg.text;
   el.style.color = cfg.color;
 }
+
+// ── BIGQUERY REFRESH (via Apps Script Web App) ──────────────────────────────
+async function fullRefresh() {
+  if (isRefreshing) return;
+  isRefreshing = true;
+
+  // bloqueia o auto-refresh enquanto manualmente atualizando
+  if (refreshTimer) { clearTimeout(refreshTimer); refreshTimer = null; }
+
+  try {
+    setLiveStatus('refreshing');
+    // no-cors = fire-and-forget. Apps Script dispara o refreshAllDataSources e retorna.
+    // Não conseguimos ler a resposta mas o trigger acontece.
+    await fetch(BQ_REFRESH_URL, { mode: 'no-cors', cache: 'no-store' });
+
+    // Aguarda o BigQuery completar a query (refresh é async no Sheets)
+    setLiveStatus('waiting');
+    await new Promise(r => setTimeout(r, BQ_WAIT_MS));
+
+    // Agora busca os dados frescos
+    await fetchData();
+  } catch (e) {
+    console.error('Refresh error:', e);
+    setLiveStatus('error');
+  } finally {
+    isRefreshing = false;
+  }
+}
+window.fullRefresh = fullRefresh;
 </script>
 </body>
 </html>
